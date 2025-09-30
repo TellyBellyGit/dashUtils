@@ -33,7 +33,7 @@
             line-height: 1.6;
             padding: 0;
             margin: 0;
-            overflow-x: hidden;
+            overflow-x: auto;
         }
         
         .container {
@@ -364,12 +364,16 @@
             display: flex;
             margin-bottom: 20px;
             border-bottom: 1px solid var(--secondary);
+            flex-wrap: wrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .tab {
             padding: 10px 20px;
             cursor: pointer;
             border-bottom: 3px solid transparent;
+            white-space: nowrap;
         }
         
         .tab.active {
@@ -419,6 +423,38 @@
             font-size: 0.8rem;
             font-weight: bold;
         }
+
+        /* Responsive table wrapper */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-responsive table {
+            min-width: 700px;
+        }
+
+        /* Mobile header for navigation */
+        .mobile-header {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--primary);
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--secondary);
+        }
+        .mobile-header select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--secondary);
+            background: var(--background);
+            color: var(--text);
+        }
+        @media (max-width: 768px) {
+            .mobile-header { display: block; }
+        }
         
         /* Color Utilities */
         .text-success {
@@ -459,6 +495,17 @@
 
         <!-- Main Content -->
         <div class="main-content">
+            <!-- Mobile Navigation (shown when sidebar is hidden) -->
+            <div class="mobile-header">
+                <select id="mobileNav">
+                    <option value="dashboard">Dashboard</option>
+                    <option value="strategies">Trading Strategies</option>
+                    <option value="checklists">Checklists</option>
+                    <option value="calculator">Position Calculator</option>
+                    <option value="journal">Trading Journal</option>
+                    <option value="performance">Performance</option>
+                </select>
+            </div>
             <!-- Dashboard Section -->
             <div class="section active" id="dashboard">
                 <div class="dashboard-header">
@@ -523,6 +570,7 @@
                             <h3>Recent Trades</h3>
                             <button>View Journal</button>
                         </div>
+                        <div class="table-responsive">
                         <table>
                             <thead>
                                 <tr>
@@ -559,6 +607,7 @@
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -944,6 +993,7 @@
                     <div class="card-header">
                         <h3>Trade History</h3>
                     </div>
+                    <div class="table-responsive">
                     <table id="tradesTable">
                         <thead>
                             <tr>
@@ -963,6 +1013,7 @@
                             <!-- Trade rows will be added here -->
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
             
@@ -1028,6 +1079,7 @@
                     <div class="card-header">
                         <h3>Monthly Performance</h3>
                     </div>
+                    <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
@@ -1042,6 +1094,7 @@
                             <!-- Monthly performance will be added here -->
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1052,6 +1105,7 @@
             // Section navigation
             const navItems = document.querySelectorAll('.nav-item');
             const sections = document.querySelectorAll('.section');
+            const mobileNav = document.getElementById('mobileNav');
             
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -1067,8 +1121,29 @@
                     // Show corresponding section
                     const sectionId = this.getAttribute('data-section');
                     document.getElementById(sectionId).classList.add('active');
+                    if (mobileNav) mobileNav.value = sectionId;
                 });
             });
+
+            // Mobile nav handler
+            if (mobileNav) {
+                const mh = document.querySelector('.mobile-header');
+                const syncMobileHeaderVisibility = () => {
+                    if (!mh) return;
+                    mh.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+                };
+                syncMobileHeaderVisibility();
+                window.addEventListener('resize', syncMobileHeaderVisibility);
+
+                mobileNav.addEventListener('change', function() {
+                    const target = this.value;
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    sections.forEach(section => section.classList.remove('active'));
+                    document.getElementById(target).classList.add('active');
+                    const sidebarItem = document.querySelector(`.nav-item[data-section="${target}"]`);
+                    if (sidebarItem) sidebarItem.classList.add('active');
+                });
+            }
             
             // Tab functionality
             const tabs = document.querySelectorAll('.tab');
