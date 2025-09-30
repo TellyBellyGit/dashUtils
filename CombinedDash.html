@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Intraday Trading Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #1a2530;
+            --accent1: #4ecdc4;
+            --accent2: #ff6b6b;
+            --accent3: #f39c12;
+            --text: #e0e0e0;
+            --background: #0a1929;
+            --card-bg: #132f4c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background: var(--primary);
+            padding: 20px 0;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--secondary);
+        }
+        
+        .logo h1 {
+            color: var(--accent1);
+            font-size: 1.5rem;
+        }
+        
+        .nav-item {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--secondary);
+            border-left: 4px solid var(--accent1);
+        }
+        
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--secondary);
+        }
+        
+        .dashboard-header h2 {
+            color: var(--accent1);
+        }
+        
+        .market-status {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .market-status-item {
+            background: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .market-status-item span {
+            color: var(--accent1);
+            font-weight: bold;
+        }
+        
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--secondary);
+        }
+        
+        .card-header h3 {
+            color: var(--accent1);
+        }
+        
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Strategy Cards */
+        .strategy-card {
+            background: var(--secondary);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent1);
+        }
+        
+        .strategy-card h4 {
+            color: var(--accent1);
+            margin-bottom: 10px;
+        }
+        
+        .strategy-card ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .strategy-card li {
+            margin-bottom: 8px;
+        }
+        
+        /* Checklist Styles */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: var(--secondary);
+            border-radius: 8px;
+        }
+        
+        .checklist-item input {
+            margin-right: 15px;
+            margin-top: 4px;
+        }
+        
+        /* Calculator Styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--secondary);
+            border-radius: 5px;
+            background: var(--background);
+            color: var(--text);
+        }
+        
+        button {
+            background: var(--accent1);
+            color: var(--background);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3cbab0;
+        }
+
+        /* Make Calculate button match input height */
+        #calculateBtn {
+            height: 37px; /* reduced by 5px for a slimmer look */
+            padding: 0 20px; /* remove vertical padding to fix height */
+        }
+
+        /* Group the button and position size input for consistent alignment */
+        .calc-group {
+            align-items: center; /* center items for balanced vertical alignment */
+        }
+        .calc-group #calculateBtn {
+            transform: translateY(-3px); /* nudge slightly higher for better alignment */
+        }
+
+        /* Align items to bottom within specific two-column rows */
+        .align-end {
+            align-items: end;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        
+        /* Result Styles */
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--secondary);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: var(--background);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--secondary);
+        }
+        
+        th {
+            background-color: var(--secondary);
+            color: var(--accent1);
+            cursor: pointer;
+        }
+        
+        tr:hover {
+            background-color: var(--secondary);
+        }
+        
+        .profit {
+            color: var(--success);
+        }
+        
+        .loss {
+            color: var(--danger);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--secondary);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--accent1);
+            color: var(--accent1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Summary Cards */
+        .summary-card {
+            background: var(--secondary);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .summary-card h3 {
+            margin-bottom: 10px;
+            color: var(--accent1);
+        }
+        
+        .summary-card p {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        /* Setup-specific styles */
+        .setup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .setup-badge {
+            background: var(--accent3);
+            color: var(--background);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        /* Color Utilities */
+        .text-success {
+            color: var(--success);
+        }
+        
+        .text-danger {
+            color: var(--danger);
+        }
+        
+        .text-warning {
+            color: var(--warning);
+        }
+        
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+        
+        .mt-20 {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-chart-line"></i> TradingPro</h1>
+            </div>
+            <a href="#" class="nav-item active" data-section="dashboard"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="#" class="nav-item" data-section="strategies"><i class="fas fa-chess-board"></i> Trading Strategies</a>
+            <a href="#" class="nav-item" data-section="checklists"><i class="fas fa-tasks"></i> Checklists</a>
+            <a href="#" class="nav-item" data-section="calculator"><i class="fas fa-calculator"></i> Position Calculator</a>
+            <a href="#" class="nav-item" data-section="journal"><i class="fas fa-book"></i> Trading Journal</a>
+            <a href="#" class="nav-item" data-section="performance"><i class="fas fa-chart-bar"></i> Performance</a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div class="section active" id="dashboard">
+                <div class="dashboard-header">
+                    <h2>Dashboard</h2>
+                    <div class="market-status">
+                        <div class="market-status-item">SPY: <span class="text-success">$452.10 (+0.8%)</span></div>
+                        <div class="market-status-item">QQQ: <span class="text-success">$378.45 (+1.2%)</span></div>
+                        <div class="market-status-item">VIX: <span class="text-danger">16.25 (-2.4%)</span></div>
+                    </div>
+                </div>
+
+                <div class="grid-3 mb-20">
+                    <div class="summary-card">
+                        <h3>Today's P/L</h3>
+                        <p class="text-success">+$1,245</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Win Rate</h3>
+                        <p>64.2%</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Risk/Reward</h3>
+                        <p>1:2.1</p>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Active Setups</h3>
+                            <button>View All</button>
+                        </div>
+                        <div class="strategy-card">
+                            <div class="setup-header">
+                                <h4>Bull Flag Breakout</h4>
+                                <span class="setup-badge">High Probability</span>
+                            </div>
+                            <p>Look for a sharp price rise (flagpole) followed by a downward sloping consolidation (flag).</p>
+                            <ul>
+                                <li>Volume decreases during consolidation</li>
+                                <li>Volume expands on breakout</li>
+                                <li>Entry on breakout above flag</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="strategy-card">
+                            <div class="setup-header">
+                                <h4>EMA Bounce</h4>
+                                <span class="setup-badge">Medium Probability</span>
+                            </div>
+                            <p>Price pulls back to a key moving average (20 or 50 EMA) and shows signs of reversal.</p>
+                            <ul>
+                                <li>Look for bullish reversal candles</li>
+                                <li>RSI should be above 30 (not oversold)</li>
+                                <li>Entry on confirmation candle</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Trades</h3>
+                            <button>View Journal</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ticker</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>P/L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>AAPL</td>
+                                    <td>$175.20</td>
+                                    <td>$178.50</td>
+                                    <td class="profit">+$330</td>
+                                </tr>
+                                <tr>
+                                    <td>TSLA</td>
+                                    <td>$245.80</td>
+                                    <td>$242.30</td>
+                                    <td class="loss">-$350</td>
+                                </tr>
+                                <tr>
+                                    <td>MSFT</td>
+                                    <td>$338.50</td>
+                                    <td>$345.75</td>
+                                    <td class="profit">+$725</td>
+                                </tr>
+                                <tr>
+                                    <td>NVDA</td>
+                                    <td>$460.30</td>
+                                    <td>$472.80</td>
+                                    <td class="profit">+$1,250</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategies Section -->
+            <div class="section" id="strategies">
+                <div class="dashboard-header">
+                    <h2>Trading Strategies</h2>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Intraday Long Entry Criteria</h3>
+                    </div>
+                    <p>Successful intraday trading requires a confluence of factors aligning for high-probability entries.</p>
+                    
+                    <div class="tabs mt-20">
+                        <div class="tab active" data-tab="technical">Technical Setup</div>
+                        <div class="tab" data-tab="context">Market Context</div>
+                        <div class="tab" data-tab="risk">Risk Management</div>
+                        <div class="tab" data-tab="execution">Execution</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="technical">
+                        <h4 class="mt-20">Support Levels</h4>
+                        <ul>
+                            <li>Previous day high/low/close</li>
+                            <li>Daily pivot points (S1, P, R1)</li>
+                            <li>Volume Profile Point of Control (POC)</li>
+                            <li>Rising 20 or 50-period EMA</li>
+                            <li>Trendlines connecting higher lows</li>
+                        </ul>
+                        
+                        <h4 class="mt-20">Reversal Signals</h4>
+                        <ul>
+                            <li><strong>Bullish Candles:</strong> Hammer, Bullish Engulfing, or Pin Bar at support</li>
+                            <li><strong>Breakout:</strong> Bull Flag/Pennant breakout above consolidation</li>
+                            <li><strong>Pattern:</strong> Double Bottom break of the "neckline"</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="context">
+                        <h4 class="mt-20">Momentum Confirmation</h4>
+                        <ul>
+                            <li><strong>Volume:</strong> Bounce/breakout MUST occur on above-average volume</li>
+                            <li><strong>RSI:</strong> Bouncing from oversold (near 30) or showing bullish divergence</li>
+                            <li><strong>MACD:</strong> Histogram showing slowing bearish momentum or bullish crossover</li>
+                        </ul>
+                        
+                        <h4 class="mt-20">Market Alignment</h4>
+                        <ul>
+                            <li>Check the broader market (e.g., S&P 500 /ES futures)</li>
+                            <li>Is the overall market (index) not bearish?</li>
+                            <li>Is the sector your stock is in strong?</li>
+                            <li>Never fight a strong bearish tide</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="risk">
+                        <h4 class="mt-20">Risk Management Principles</h4>
+                        <ul>
+                            <li>Never risk more than 1-2% of your account on any single trade</li>
+                            <li>Always set a stop-loss before entering a trade</li>
+                            <li>Aim for a minimum 1:1.5 risk-reward ratio</li>
+                            <li>Size your position based on your stop-loss distance</li>
+                            <li>Never move your stop-loss further away from your entry</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="execution">
+                        <h4 class="mt-20">Execution Sequence</h4>
+                        <ol>
+                            <li>Identify the context and setup</li>
+                            <li>Determine your entry, stop-loss, and profit target levels</li>
+                            <li>Calculate your position size based on risk parameters</li>
+                            <li>Place your entry order (limit or stop-limit)</li>
+                            <li>Immediately set your stop-loss and profit target orders</li>
+                            <li>Never deviate from your plan once executed</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="grid-2 mt-20">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Bullish Candlestick Patterns</h3>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Hammer</h4>
+                            <p>A candle with a small body and long lower wick, indicating rejection of lower prices.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Bullish Engulfing</h4>
+                            <p>A green candle that completely engulfs the previous red candle, showing buyer dominance.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Morning Star</h4>
+                            <p>A three-candle pattern: long red, small indecision, long green - indicating reversal.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Chart Patterns</h3>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Bull Flag</h4>
+                            <p>A sharp rally followed by a downward sloping consolidation, then breakout continuation.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Double Bottom</h4>
+                            <p>W-shaped pattern with two similar lows, indicating potential reversal.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Ascending Triangle</h4>
+                            <p>Horizontal resistance with rising support, indicating bullish accumulation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Checklists Section -->
+            <div class="section" id="checklists">
+                <div class="dashboard-header">
+                    <h2>Trade Checklists</h2>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Pre-Trade Checklist</h3>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="pre1">
+                            <label for="pre1">I have identified a logical entry point based on my strategy</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="pre2">
+                            <label for="pre2">I have set a stop-loss at a point that invalidates my trade idea</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="pre3">
+                            <label for="pre3">I have set a profit target with at least a 1:2 risk-reward ratio</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="pre4">
+                            <label for="pre4">I have calculated my position size based on my stop-loss</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="pre5">
+                            <label for="pre5">This trade risks no more than 1% of my account</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="pre6">
+                            <label for="pre6">The overall market trend is favorable for this trade</label>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Post-Trade Checklist</h3>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="post1">
+                            <label for="post1">I followed my plan exactly as predefined</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="post2">
+                            <label for="post2">I did not move my stop-loss out of fear</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="post3">
+                            <label for="post3">I did not take profits early out of greed</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="post4">
+                            <label for="post4">I have journaled this trade and my emotions</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="post5">
+                            <label for="post5">I have reviewed what went well and what could be improved</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="post6">
+                            <label for="post6">I'm mentally prepared for the next trade opportunity</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-20">
+                    <div class="card-header">
+                        <h3>Daily Preparation Checklist</h3>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="day1">
+                                <label for="day1">Review market news and economic calendar</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="day2">
+                                <label for="day2">Identify key support and resistance levels</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="day3">
+                                <label for="day3">Review my watchlist for potential setups</label>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="day4">
+                                <label for="day4">Set daily profit and loss limits</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="day5">
+                                <label for="day5">Check that my trading platform is working properly</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="day6">
+                                <label for="day6">Mental preparation and focus exercises</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calculator Section -->
+            <div class="section" id="calculator">
+                <div class="dashboard-header">
+                    <h2>Position Size Calculator</h2>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Calculator</h3>
+                        </div>
+                        <div class="form-group">
+                            <label for="accountSize">Account Size ($)</label>
+                            <input type="number" id="accountSize" value="400">
+                        </div>
+                        
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="riskPercent">Risk Per Trade (%)</label>
+                                <input type="number" id="riskPercent" value="5" min="0.1" max="100" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="maxLoss">Max Loss ($)</label>
+                                <input type="number" id="maxLoss" placeholder="--" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="entryPrice">Entry Price ($)</label>
+                                <input type="number" id="entryPrice" step="0.01" placeholder="e.g., 150.25">
+                            </div>
+                            <div class="form-group">
+                                <label for="totalCost">Total Cost ($)</label>
+                                <input type="number" id="totalCost" step="0.01" placeholder="--">
+                            </div>
+                        </div>
+                        
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="stopLoss">Stop-Loss Price ($)</label>
+                                <input type="number" id="stopLoss" placeholder="e.g., 145.50">
+                            </div>
+                            <div class="form-group">
+                                <label for="takeProfitPrice">Take Profit Price ($)</label>
+                                <input type="number" id="takeProfitPrice" placeholder="e.g., 160.00">
+                            </div>
+                        </div>
+                        
+                        <div class="grid-2 calc-group">
+                            <button id="calculateBtn">Calculate Position Size</button>
+                            <div class="form-group">
+                                <input type="number" id="positionSizeInput" placeholder="--" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Risk Management Guidelines</h3>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>1% Rule</h4>
+                            <p>Never risk more than 1% of your total account value on a single trade. This protects you from significant drawdowns.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Risk-Reward Ratio</h4>
+                            <p>Always aim for a minimum 1:1.5 risk-reward ratio. Better opportunities offer 1:2 or higher.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Position Sizing Formula</h4>
+                            <p>Shares = (Account Size × Risk %) ÷ (Entry Price - Stop Loss Price)</p>
+                        </div>
+                        <div class="strategy-card">
+                            <h4>Trade Selection</h4>
+                            <p>If the position size requires too much capital or the risk-reward is poor, consider skipping the trade.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-20">
+                    <div class="card-header">
+                        <h3>Risk-Reward Calculator</h3>
+                    </div>
+                    <p>This tool calculates the risk-reward ratio using your current Entry Price and Stop-Loss. Enter a Target Price to compute how many units of reward you expect for each unit of risk (shown as 1:R). Ratios above 1.5 generally indicate a favorable setup.</p>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="rewardPrice">Target Price ($)</label>
+                            <input type="number" id="rewardPrice" placeholder="e.g., 160.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="riskRewardRatio">Risk-Reward Ratio</label>
+                            <input type="text" id="riskRewardRatio" readonly placeholder="--">
+                        </div>
+                    </div>
+                    <button id="calculateRr">Calculate Risk-Reward</button>
+                </div>
+            </div>
+            
+            <!-- Journal Section -->
+            <div class="section" id="journal">
+                <div class="dashboard-header">
+                    <h2>Trading Journal</h2>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Add New Trade</h3>
+                    </div>
+                    <div class="grid-4">
+                        <div class="form-group">
+                            <label for="tradeTicker">Ticker Symbol</label>
+                            <input type="text" id="tradeTicker" placeholder="e.g., AAPL">
+                        </div>
+                        <div class="form-group">
+                            <label for="tradeEntry">Entry Price</label>
+                            <input type="number" id="tradeEntry" step="0.01" placeholder="e.g., 150.25">
+                        </div>
+                        <div class="form-group">
+                            <label for="tradeExit">Exit Price</label>
+                            <input type="number" id="tradeExit" step="0.01" placeholder="e.g., 155.50">
+                        </div>
+                        <div class="form-group">
+                            <label for="tradeShares">Shares</label>
+                            <input type="number" id="tradeShares" placeholder="e.g., 100">
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="tradeSetup">Setup Type</label>
+                            <select id="tradeSetup">
+                                <option value="">Select Setup</option>
+                                <option value="bull_flag">Bull Flag</option>
+                                <option value="ema_bounce">EMA Bounce</option>
+                                <option value="breakout">Breakout</option>
+                                <option value="reversal">Reversal</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tradeResult">Result</label>
+                            <select id="tradeResult">
+                                <option value="win">Win</option>
+                                <option value="loss">Loss</option>
+                                <option value="break_even">Break Even</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tradeNotes">Trade Notes</label>
+                        <input type="text" id="tradeNotes" placeholder="e.g., Followed plan, took profit at target">
+                    </div>
+                    
+                    <button id="addTradeBtn">Add Trade to Journal</button>
+                </div>
+                
+                <div class="card mt-20">
+                    <div class="card-header">
+                        <h3>Trade History</h3>
+                    </div>
+                    <table id="tradesTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="ticker">Ticker ↕</th>
+                                <th data-sort="entry">Entry ↕</th>
+                                <th data-sort="exit">Exit ↕</th>
+                                <th data-sort="shares">Shares ↕</th>
+                                <th data-sort="pl">P/L ($) ↕</th>
+                                <th data-sort="plPercent">P/L (%) ↕</th>
+                                <th data-sort="setup">Setup ↕</th>
+                                <th data-sort="result">Result ↕</th>
+                                <th>Notes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradesBody">
+                            <!-- Trade rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Performance Section -->
+            <div class="section" id="performance">
+                <div class="dashboard-header">
+                    <h2>Performance Analytics</h2>
+                </div>
+                
+                <div class="grid-4">
+                    <div class="summary-card">
+                        <h3>Total Trades</h3>
+                        <p id="totalTrades">0</p>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <h3>Win Rate</h3>
+                        <p id="winRate">0%</p>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <h3>Avg Profit %</h3>
+                        <p id="avgProfit">0%</p>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <h3>Avg Loss %</h3>
+                        <p id="avgLoss">0%</p>
+                    </div>
+                </div>
+                
+                <div class="grid-2 mt-20">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Performance by Setup</h3>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Setup Type</th>
+                                    <th>Total Trades</th>
+                                    <th>Win Rate</th>
+                                    <th>Avg P/L %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="setupPerformance">
+                                <!-- Setup performance will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Equity Curve Simulation</h3>
+                        </div>
+                        <div style="height: 300px; background: var(--secondary); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <p>Equity curve chart will be displayed here</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-20">
+                    <div class="card-header">
+                        <h3>Monthly Performance</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Trades</th>
+                                <th>Win Rate</th>
+                                <th>P/L ($)</th>
+                                <th>P/L (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyPerformance">
+                            <!-- Monthly performance will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Section navigation
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.section');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all items and sections
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    sections.forEach(section => section.classList.remove('active'));
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Show corresponding section
+                    const sectionId = this.getAttribute('data-section');
+                    document.getElementById(sectionId).classList.add('active');
+                });
+            });
+            
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Position size calculator (StopLossCalc logic)
+            const calculateBtn = document.getElementById('calculateBtn');
+            const positionSizeInput = document.getElementById('positionSizeInput');
+            const totalCostInput = document.getElementById('totalCost');
+            let totalCostUserEdited = false; // track if user manually set total cost
+            
+            calculateBtn.addEventListener('click', function() {
+                // Get input values
+                const accountSize = parseFloat(document.getElementById('accountSize').value);
+                const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+                const riskPercent = parseFloat(document.getElementById('riskPercent').value);
+
+                // Validate inputs (stopLoss input is ignored for this calculator)
+                if (isNaN(accountSize) || isNaN(entryPrice) || isNaN(riskPercent)) {
+                    alert('Please fill in Account Size, Risk %, and Entry Price with valid numbers.');
+                    return;
+                }
+
+                if (accountSize <= 0 || riskPercent <= 0 || entryPrice <= 0) {
+                    alert('All values must be greater than zero.');
+                    return;
+                }
+
+                // Calculate risk amount
+                const riskAmount = accountSize * (riskPercent / 100);
+
+                // Calculate stop loss (5% below entry)
+                const stopLossPercentage = 5;
+                const stopLossPrice = entryPrice * (1 - stopLossPercentage / 100);
+                const stopLossAmount = entryPrice - stopLossPrice;
+
+                // Calculate take profit (10% above entry - twice the stop loss distance)
+                const takeProfitPercentage = 10;
+                const takeProfitPrice = entryPrice * (1 + takeProfitPercentage / 100);
+                const takeProfitAmount = takeProfitPrice - entryPrice;
+
+                // Calculate position size
+                const priceDifference = entryPrice - stopLossPrice;
+                const positionSize = Math.floor(riskAmount / priceDifference);
+
+                // Display results in inputs and enable manual adjustment of position size
+                if (positionSizeInput) {
+                    positionSizeInput.value = positionSize;
+                    positionSizeInput.readOnly = false; // allow user to change after calculation
+                }
+                
+                // Populate the input boxes with calculated values
+                const stopLossInput = document.getElementById('stopLoss');
+                if (stopLossInput) stopLossInput.value = stopLossPrice.toFixed(2);
+                const takeProfitInput = document.getElementById('takeProfitPrice');
+                if (takeProfitInput) takeProfitInput.value = takeProfitPrice.toFixed(2);
+
+                // Populate Total Cost (Entry Price * Position Size)
+                const totalCostInputLocal = document.getElementById('totalCost');
+                if (totalCostInputLocal) totalCostInputLocal.value = (entryPrice * positionSize).toFixed(2);
+                totalCostUserEdited = false; // calculation seeds total cost
+
+                // Populate Max Loss (Total Cost - Position Size * Stop-Loss Price)
+                const maxLossInput = document.getElementById('maxLoss');
+                if (maxLossInput) maxLossInput.value = (positionSize * (entryPrice - stopLossPrice)).toFixed(2);
+            });
+
+            // Allow manual edits of Position Size to recalc Total Cost and Max Loss
+            if (positionSizeInput) {
+                positionSizeInput.addEventListener('input', function() {
+                    const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+                    const stopLossPrice = parseFloat(document.getElementById('stopLoss').value);
+                    const positionSize = parseFloat(positionSizeInput.value);
+
+                    if (isNaN(entryPrice) || isNaN(stopLossPrice) || isNaN(positionSize)) {
+                        return; // wait for valid numbers
+                    }
+
+                    const totalCostInputLocal = document.getElementById('totalCost');
+                    if (totalCostInputLocal) totalCostInputLocal.value = (entryPrice * positionSize).toFixed(2);
+                    totalCostUserEdited = false; // position size drives total cost
+
+                    const maxLossInput = document.getElementById('maxLoss');
+                    if (maxLossInput) maxLossInput.value = (positionSize * (entryPrice - stopLossPrice)).toFixed(2);
+                });
+            }
+
+            // Live update helpers for Entry Price and Stop-Loss changes
+            function recalcTotals() {
+                const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+                const stopLossPrice = parseFloat(document.getElementById('stopLoss').value);
+                const positionSizeField = document.getElementById('positionSizeInput');
+                const positionSizeVal = parseFloat(positionSizeField.value);
+                const totalCostVal = parseFloat(document.getElementById('totalCost').value);
+
+                if (isNaN(entryPrice) || isNaN(stopLossPrice)) {
+                    return; // need valid price inputs
+                }
+
+                let effectivePositionSize = positionSizeVal;
+                if (!isNaN(totalCostVal) && totalCostUserEdited && entryPrice > 0) {
+                    // If user edited total cost, derive position size from it
+                    effectivePositionSize = Math.floor(totalCostVal / entryPrice);
+                    if (positionSizeField && !isNaN(effectivePositionSize)) {
+                        positionSizeField.value = effectivePositionSize;
+                    }
+                } else if (!isNaN(effectivePositionSize)) {
+                    // Otherwise, compute total cost from position size
+                    if (totalCostInput) totalCostInput.value = (entryPrice * effectivePositionSize).toFixed(2);
+                }
+
+                const maxLossInput = document.getElementById('maxLoss');
+                if (maxLossInput && !isNaN(effectivePositionSize)) maxLossInput.value = (effectivePositionSize * (entryPrice - stopLossPrice)).toFixed(2);
+            }
+
+            const entryPriceInputField = document.getElementById('entryPrice');
+            const stopLossField = document.getElementById('stopLoss');
+            if (entryPriceInputField) entryPriceInputField.addEventListener('input', recalcTotals);
+            if (stopLossField) stopLossField.addEventListener('input', recalcTotals);
+
+            // Allow manual edits of Total Cost to derive Position Size and Max Loss
+            if (totalCostInput) {
+                totalCostInput.addEventListener('input', function() {
+                    totalCostUserEdited = true;
+                    recalcTotals();
+                });
+            }
+            
+            // Risk-Reward calculator
+            const calculateRrBtn = document.getElementById('calculateRr');
+            
+            calculateRrBtn.addEventListener('click', function() {
+                const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+                const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+                const rewardPrice = parseFloat(document.getElementById('rewardPrice').value);
+                
+                if (isNaN(entryPrice) || isNaN(stopLoss) || isNaN(rewardPrice)) {
+                    alert('Please fill in Entry, Stop-Loss, and Target prices first.');
+                    return;
+                }
+                
+                const risk = entryPrice - stopLoss;
+                const reward = rewardPrice - entryPrice;
+                const ratio = reward / risk;
+                
+                document.getElementById('riskRewardRatio').value = `1:${ratio.toFixed(2)}`;
+            });
+            
+            // Trading journal functionality
+            const addTradeBtn = document.getElementById('addTradeBtn');
+            const tradesBody = document.getElementById('tradesBody');
+            
+            // Initialize trades array from localStorage or empty array
+            let trades = JSON.parse(localStorage.getItem('trades')) || [];
+            
+            // Function to update summary metrics
+            function updateSummary() {
+                const totalTrades = trades.length;
+                const winningTrades = trades.filter(trade => trade.result === 'win').length;
+                const winRate = totalTrades > 0 ? (winningTrades / totalTrades * 100).toFixed(2) : 0;
+                
+                const profitTrades = trades.filter(trade => trade.result === 'win');
+                const avgProfit = profitTrades.length > 0 ? 
+                    (profitTrades.reduce((sum, trade) => sum + parseFloat(trade.plPercent), 0) / profitTrades.length).toFixed(2) : 0;
+                
+                const lossTrades = trades.filter(trade => trade.result === 'loss');
+                const avgLoss = lossTrades.length > 0 ? 
+                    (lossTrades.reduce((sum, trade) => sum + parseFloat(trade.plPercent), 0) / lossTrades.length).toFixed(2) : 0;
+                
+                document.getElementById('totalTrades').textContent = totalTrades;
+                document.getElementById('winRate').textContent = `${winRate}%`;
+                document.getElementById('avgProfit').textContent = `${avgProfit}%`;
+                document.getElementById('avgLoss').textContent = `${avgLoss}%`;
+            }
+            
+            // Function to render trades table
+            function renderTrades() {
+                tradesBody.innerHTML = '';
+                
+                trades.forEach((trade, index) => {
+                    const row = document.createElement('tr');
+                    
+                    const plClass = trade.result === 'win' ? 'profit' : (trade.result === 'loss' ? 'loss' : '');
+                    
+                    row.innerHTML = `
+                        <td>${trade.ticker}</td>
+                        <td>$${parseFloat(trade.entry).toFixed(2)}</td>
+                        <td>$${parseFloat(trade.exit).toFixed(2)}</td>
+                        <td>${trade.shares}</td>
+                        <td class="${plClass}">${trade.pl > 0 ? '+' : ''}$${parseFloat(trade.pl).toFixed(2)}</td>
+                        <td class="${plClass}">${trade.plPercent > 0 ? '+' : ''}${parseFloat(trade.plPercent).toFixed(2)}%</td>
+                        <td>${trade.setup}</td>
+                        <td>${trade.result.charAt(0).toUpperCase() + trade.result.slice(1)}</td>
+                        <td>${trade.notes}</td>
+                        <td><button class="delete-btn" data-index="${index}">Delete</button></td>
+                    `;
+                    
+                    tradesBody.appendChild(row);
+                });
+                
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        trades.splice(index, 1);
+                        localStorage.setItem('trades', JSON.stringify(trades));
+                        renderTrades();
+                        updateSummary();
+                    });
+                });
+                
+                updateSummary();
+            }
+            
+            // Add trade to journal
+            addTradeBtn.addEventListener('click', function() {
+                const ticker = document.getElementById('tradeTicker').value.trim();
+                const entry = parseFloat(document.getElementById('tradeEntry').value);
+                const exit = parseFloat(document.getElementById('tradeExit').value);
+                const shares = parseInt(document.getElementById('tradeShares').value);
+                const setup = document.getElementById('tradeSetup').value;
+                const result = document.getElementById('tradeResult').value;
+                const notes = document.getElementById('tradeNotes').value.trim();
+                
+                if (!ticker || isNaN(entry) || isNaN(exit) || isNaN(shares) || !setup || !notes) {
+                    alert('Please fill in all trade details.');
+                    return;
+                }
+                
+                // Calculate P/L
+                const pl = (exit - entry) * shares;
+                const plPercent = ((exit - entry) / entry * 100);
+                
+                // Add trade to array
+                trades.push({
+                    ticker,
+                    entry,
+                    exit,
+                    shares,
+                    pl,
+                    plPercent,
+                    setup,
+                    result,
+                    notes,
+                    date: new Date().toLocaleDateString()
+                });
+                
+                // Save to localStorage
+                localStorage.setItem('trades', JSON.stringify(trades));
+                
+                // Re-render table
+                renderTrades();
+                
+                // Clear form
+                document.getElementById('tradeTicker').value = '';
+                document.getElementById('tradeEntry').value = '';
+                document.getElementById('tradeExit').value = '';
+                document.getElementById('tradeShares').value = '';
+                document.getElementById('tradeNotes').value = '';
+            });
+            
+            // Initialize table sorting
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', function() {
+                    const sortKey = this.getAttribute('data-sort');
+                    let sortDirection = this.getAttribute('data-direction') || 'asc';
+                    
+                    // Toggle sort direction
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    this.setAttribute('data-direction', sortDirection);
+                    
+                    // Update arrow indicator
+                    this.textContent = this.textContent.replace('↕', sortDirection === 'asc' ? '↑' : '↓');
+                    
+                    // Reset other headers
+                    document.querySelectorAll('th[data-sort]').forEach(header => {
+                        if (header !== this) {
+                            header.textContent = header.textContent.replace(/[↑↓]/, '↕');
+                            header.removeAttribute('data-direction');
+                        }
+                    });
+                    
+                    // Sort trades
+                    trades.sort((a, b) => {
+                        let valueA = a[sortKey];
+                        let valueB = b[sortKey];
+                        
+                        // Convert to numbers if possible
+                        if (!isNaN(parseFloat(valueA)) && !isNaN(parseFloat(valueB))) {
+                            valueA = parseFloat(valueA);
+                            valueB = parseFloat(valueB);
+                        }
+                        
+                        if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+                        if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+                    
+                    // Re-render table
+                    renderTrades();
+                });
+            });
+            
+            // Render any existing trades on page load
+            renderTrades();
+        });
+    </script>
+</body>
+</html>
