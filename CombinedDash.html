@@ -928,6 +928,14 @@
                     </div>
                     <button id="calculateRr">Calculate Risk-Reward</button>
                 </div>
+
+                <!-- Links footer: repo and page link -->
+                <div class="card mt-20">
+                    <p>
+                        Repo: https://github.com/TellyBellyGit/dashUtils.git —
+                        Page: <a href="https://tinyurl.com/dashCalc" target="_blank" rel="noopener">tinyurl.com/dashCalc</a>
+                    </p>
+                </div>
             </div>
             
             <!-- Journal Section -->
@@ -1106,6 +1114,18 @@
             const navItems = document.querySelectorAll('.nav-item');
             const sections = document.querySelectorAll('.section');
             const mobileNav = document.getElementById('mobileNav');
+            
+            // If on mobile, default to Calculator section on load
+            const isMobile = () => window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent);
+            if (isMobile()) {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                sections.forEach(section => section.classList.remove('active'));
+                const calcSection = document.getElementById('calculator');
+                if (calcSection) calcSection.classList.add('active');
+                const calcNav = document.querySelector('.nav-item[data-section="calculator"]');
+                if (calcNav) calcNav.classList.add('active');
+                if (mobileNav) mobileNav.value = 'calculator';
+            }
             
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
